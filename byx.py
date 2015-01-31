@@ -45,12 +45,14 @@ idfn = lambda x: x
 
 
 def dehex(x):
+    """Convert from hex string/byte-string to bytes."""
     if isinstance(x, str):
         x = x.encode('ascii')
     return binascii.unhexlify(x)
 
 
 def enhex(x):
+    """Convert from bytes to hex string."""
     return binascii.hexlify(x).decode('ascii')
 
 
@@ -65,6 +67,10 @@ base_converters = {base: ((lambda s, base=base: int(s, BASES[base])),
 
 
 class EndiannedBytes(bytes):
+    """
+    Endian-tagged byte string.
+    """
+
     def __new__(*args, **kwargs):
         if 'endianness' in kwargs:
             endianness = kwargs['endianness']
@@ -77,10 +83,12 @@ class EndiannedBytes(bytes):
 
 
 def limit_width(bits, n):
+    """Truncate an integer to a given number of bits."""
     return n % (2 ** bits)
 
 
 def signify(bits, sign, n):
+    """Truncate and possibly add a sign to an unsigned integer."""
     if sign == UNSIGNED:
         return limit_width(bits, n)
     elif sign == SIGNED:
@@ -90,6 +98,7 @@ def signify(bits, sign, n):
 
 
 def designify(bits, sign, n):
+    """Interpret a signed integer as unsigned."""
     if sign == UNSIGNED:
         if n < 0 or n >= 2 ** bits:
             raise ValueError('n outside range [0, {}): {}'.format(
@@ -107,6 +116,7 @@ def designify(bits, sign, n):
 
 
 def bytes_to_number(s):
+    """Find the integer represented by an endian-tagged byte-string."""
     if s.endianness is None:
         raise ValueError('no endianness')
     if s.endianness == LITTLE_ENDIAN:
@@ -121,6 +131,7 @@ def bytes_to_number(s):
 
 
 def number_to_bytes(endianness, n):
+    """Encode a number as a byte-string."""
     if n < 0:
         raise ValueError('n cannot be negative: {}'.format(n))
     bs = []
@@ -138,6 +149,7 @@ def number_to_bytes(endianness, n):
 
 
 def bytes_to_widthlist(sign, width, s):
+    """Decode a byte-string as a list of integers of a given width."""
     l = []
     if width == BYTE:
         return s
@@ -181,6 +193,7 @@ WIDTHLIST_OUTPUT_REGEX = re.compile(
 
 
 def normalize_input(inspec, s):
+    """Convert the input to a canonical form for its input specifier."""
     m = BYTE_STRING_REGEX.match(inspec)
     if m:
         if isinstance(s, str):
@@ -212,6 +225,7 @@ def normalize_input(inspec, s):
 
 
 def convert(outspec, inval):
+    """Convert the input to the specified output format."""
     if isinstance(inval, bytes):
         if outspec in BYTE_STRING_FORMATS:
             return byte_string_converters[outspec][1](inval)
@@ -262,6 +276,7 @@ def convert(outspec, inval):
 
 
 def normalize_output(outval):
+    """Represent the output value as a byte-string."""
     if isinstance(outval, bytes):
         return outval
     if isinstance(outval, str):
@@ -271,10 +286,13 @@ def normalize_output(outval):
 
 def main():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('input_spec')
-    argparser.add_argument('output_spec')
-    argparser.add_argument('input', nargs='?')
-
+    argparser.add_argument('input_spec',
+                           help='the format specifier to convert from')
+    argparser.add_argument('output_spec',
+                           help='the format specifier to convert to')
+    argparser.add_argument('input', nargs='?',
+                           help=('the value to convert; '
+                                 'taken from stdin if unspecified'))
     args = argparser.parse_args()
 
     inp = args.input if args.input is not None else sys.stdin.buffer.read()
