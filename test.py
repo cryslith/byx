@@ -10,6 +10,8 @@ class TestNormalizeInput(unittest.TestCase):
     def test_bytes(self):
         self.assertEqual(normalize_input('bytes', b'ABCD\x00'), b'ABCD\x00')
         self.assertEqual(normalize_input('hexstr', '4142434400'), b'ABCD\x00')
+        self.assertEqual(normalize_input('strlit', 'A\\x42\\103\\n\\x00'),
+                         b'ABC\n\x00')
         self.assertEqual(normalize_input('big-endian bytes', b'ABCD\x00'),
                          EndiannedBytes(b'ABCD\x00', endianness='big-endian'))
 
@@ -28,6 +30,7 @@ class TestConvert(unittest.TestCase):
     def test_byte_to_byte(self):
         self.assertEqual(convert('bytes', b'ABCD'), b'ABCD')
         self.assertEqual(convert('hexstr', b'ABCD'), '41424344')
+        self.assertEqual(convert('strlit', b'ABCD'), '\\x41\\x42\\x43\\x44')
 
     def test_byte_to_integer(self):
         ebytes = EndiannedBytes(b'ABCD', endianness='big-endian')

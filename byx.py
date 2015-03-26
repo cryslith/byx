@@ -9,7 +9,8 @@ import argparse
 
 BYTES = 'bytes'
 HEX_STRING = 'hexstr'
-BYTE_STRING_FORMATS = [BYTES, HEX_STRING]
+STRING_LITERAL = 'strlit'
+BYTE_STRING_FORMATS = [BYTES, HEX_STRING, STRING_LITERAL]
 BYTE_STRING_REGEX = '(?P<bytes>{})'.format('|'.join(BYTE_STRING_FORMATS))
 
 BINARY = 'binary'
@@ -56,8 +57,22 @@ def enhex(x):
     return binascii.hexlify(x).decode('ascii')
 
 
+def delit(x):
+    """Convert from C string-literal string/byte-string to bytes."""
+    if isinstance(x, str):
+        x = x.encode('ascii')
+    return x.decode('unicode_escape').encode('ascii')
+
+
+def enlit(x):
+    """Convert from bytes to C-style string-literal."""
+    hexstr = enhex(x)
+    return ''.join('\\x' + hexstr[i:i + 2] for i in range(0, len(hexstr), 2))
+
+
 byte_string_converters = {BYTES: (idfn, idfn),
-                          HEX_STRING: (dehex, enhex)}
+                          HEX_STRING: (dehex, enhex),
+                          STRING_LITERAL: (delit, enlit)}
 
 
 base_converters = {base: ((lambda s, base=base: int(s, BASES[base])),
@@ -300,5 +315,6 @@ def main():
     outval = convert(args.output_spec, inval)
     sys.stdout.buffer.write(normalize_output(outval))
     sys.stdout.buffer.flush()
+
 if __name__ == '__main__':
     main()
