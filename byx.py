@@ -300,7 +300,34 @@ def normalize_output(outval):
 
 
 def main():
-    argparser = argparse.ArgumentParser()
+    argparser = argparse.ArgumentParser(epilog='''
+Specifiers
+==========
+
+base:
+"binary" | "octal" | "decimal" | "hexidecimal"
+
+width:
+"byte" | "short" | "int" | "long"
+
+sign:
+"signed" | "unsigned"
+
+width-number:
+width | sign width
+
+number:
+base | "integer" | width-number  ("integer" valid only in output)
+
+bytes:
+"bytes" | "hexstr" | "strlit"
+
+endianness:
+"big-endian" | "little-endian"
+
+byte-string:
+bytes | endianness bytes
+''', formatter_class=argparse.RawDescriptionHelpFormatter)
     argparser.add_argument('input_spec',
                            help='the format specifier to convert from')
     argparser.add_argument('output_spec',
